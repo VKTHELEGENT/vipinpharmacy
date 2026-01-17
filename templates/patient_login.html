@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Login - Medical Pharmacy Manager{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <h2>Patient Login</h2>
+        <form method="POST" action="{{ url_for('patient_login') }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autofocus placeholder="Enter username">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Continue as Patient</button>
+        </form>
+
+        <div class="login-footer">
+            <a href="{{ url_for('faculty_login') }}">Faculty Login</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

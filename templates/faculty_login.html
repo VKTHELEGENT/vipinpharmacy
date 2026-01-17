@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Login - Medical Pharmacy Manager{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <h2>Faculty Login</h2>
+        <form method="POST" action="{{ url_for('faculty_login') }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+        <div class="login-footer">
+            <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+        </div>
+        <div class="login-footer">
+            <a href="{{ url_for('patient_login') }}">Patient Login</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

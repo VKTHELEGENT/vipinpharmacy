@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Dashboard - Medical Pharmacy Manager{% endblock %}
+
+{% block extra_head %}
+<style>
+    .search-container {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        display: none;
+    }
+    .autocomplete-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+    .autocomplete-item:hover {
+        background-color: #f0f0f0;
+    }
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Welcome, {{ session.username }}!</h2>
+    
+    {% if low_stock %}
+    <div class="warning-banner">
+        <strong>⚠️ Low Stock Warning!</strong>
+        <p>The following medicines have less than 18 strips:</p>
+        <ul>
+            {% for medicine in low_stock %}
+            <li>{{ medicine.name }} - {{ medicine.quantity }} strips remaining</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="dashboard-section">
+        <h3>Search Medicine</h3>
+        <div class="search-container">
+            <input 
+                type="text" 
+                id="medicine-search" 
+                class="search-input" 
+                placeholder="Type medicine name (e.g., para for Paracetamol)..."
+                autocomplete="off"
+            >
+            <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h3>Medicine Details</h3>
+        <div id="medicine-details" class="medicine-details-container">
+            <p class="info-text">Search for a medicine to view details</p>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h3>All Available Medicines</h3>
+        <div class="medicines-grid">
+            {% for medicine in medicines %}
+            <div class="medicine-card {% if medicine.quantity < 18 %}low-stock{% endif %}" onclick="showMedicineDetails({{ medicine.id }})">
+                <h4>{{ medicine.name }}</h4>
+                <p><strong>Quantity:</strong> {{ medicine.quantity }} strips</p>
+                <p><strong>Status:</strong> 
+                    {% if medicine.available %}
+                        <span class="status-available">Available</span>
+                    {% else %}
+                        <span class="status-unavailable">Not Available</span>
+                    {% endif %}
+                </p>
+                {% if medicine.quantity < 18 %}
+                <p class="low-stock-warning">⚠️ Low Stock!</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Medicine Details Modal -->
+<div id="medicine-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeMedicineModal()">&times;</span>
+        <div id="modal-medicine-details"></div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/patient.js') }}"></script>
+{% endblock %}
+

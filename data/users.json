@@ -1,0 +1,37 @@
+{
+  "patients": [
+    {
+      "username": "patient1",
+      "password_hash": "$2b$12$5tw1N8aSptcGnv1ZtNT0Iu/X/F1jEUh4HfrITFHo.PKYiuEeLyZmO",
+      "email": "patient1@example.com"
+    },
+    {
+      "username": "patient2",
+      "password_hash": "$2b$12$82xPGV6q2fX/THm1AlbrFu4.cPsm3pKBqyV7SXGMQj4h1fiXIEGI6",
+      "email": "patient2@example.com"
+    },
+    {
+      "username": "testuser789",
+      "password_hash": "",
+      "email": ""
+    },
+    {
+      "username": "vghjkfhjkfj",
+      "password_hash": "",
+      "email": ""
+    }
+  ],
+  "faculty": [
+    {
+      "username": "faculty1",
+      "password_hash": "$2b$12$rRcJZq4vDSw2UdqfFgj5Y.QS1.GA0HDTkWK6G9l5hAfJrn1KEXieq",
+      "email": "faculty1@example.com"
+    },
+    {
+      "username": "admin",
+      "password_hash": "$2b$12$Xib.iGLrnKC7o93gX9Z6GunhStWyh8KgZZSU2T0N94WWc5tskmwAO",
+      "email": "admin@example.com"
+    }
+  ],
+  "reset_codes": {}
+}
