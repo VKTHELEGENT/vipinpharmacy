@@ -11,13 +11,18 @@
       "email": "patient2@example.com"
     },
     {
-      "username": "testuser789",
-      "password_hash": "",
+      "username": "newuser_1866",
+      "password_hash": "$2b$12$HHM2tkrZ.ucbyOQ/u/MMiuJSd5NgR10wwmOefh0WBsuPT0g5wuh4a",
       "email": ""
     },
     {
-      "username": "vghjkfhjkfj",
-      "password_hash": "",
+      "username": "admin",
+      "password_hash": "$2b$12$my07jIBf8tleTHgAxduTT.JWE5pRl359CbxiuasvAhOMMe0DIzery",
+      "email": ""
+    },
+    {
+      "username": "newuser_1816",
+      "password_hash": "$2b$12$WRPMzuHPO/zxp2ACjxxaee1JrD73x7Ab0fjoGWdxYOvb/uCjvcEXe",
       "email": ""
     }
   ],

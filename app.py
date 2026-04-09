@@ -24,6 +24,7 @@ def load_users():
 
 def save_users(data):
     """Save users to JSON file"""
+    os.makedirs(os.path.dirname(USERS_FILE), exist_ok=True)
     with open(USERS_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
@@ -36,6 +37,7 @@ def load_medicines():
 
 def save_medicines(data):
     """Save medicines to JSON file"""
+    os.makedirs(os.path.dirname(MEDICINES_FILE), exist_ok=True)
     with open(MEDICINES_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
@@ -79,36 +81,55 @@ def patient_login():
     """Patient login page"""
     if request.method == 'POST':
         username = request.form.get('username')
+        password = request.form.get('password')
+        mode = request.form.get('mode', 'login') # Default to login if not specified
 
-        
-        if username:
+        if username and password:
             users_data = load_users()
+            patients = users_data.get('patients', [])
             
-            # Check if patient exists
-            patient_found = False
-            for patient in users_data.get('patients', []):
+            # Find patient
+            existing_patient = None
+            for patient in patients:
                 if patient['username'] == username:
-                    patient_found = True
+                    existing_patient = patient
                     break
             
-            # If not found, create new patient
-            if not patient_found:
-                new_patient = {
-                    'username': username,
-                    'password_hash': '', # No password needed
-                    'email': '' # Optional, or could ask in future
-                }
-                if 'patients' not in users_data:
-                    users_data['patients'] = []
-                users_data['patients'].append(new_patient)
-                save_users(users_data)
+            if mode == 'login':
+                if existing_patient:
+                    if existing_patient.get('password_hash') and check_password(password, existing_patient['password_hash']):
+                         session['username'] = username
+                         session['user_type'] = 'patient'
+                         return redirect(url_for('patient_dashboard'))
+                    else:
+                        flash('Invalid username or password', 'error')
+                else:
+                    flash('Invalid username or password', 'error')
             
-            # Log in
-            session['username'] = username
-            session['user_type'] = 'patient'
-            return redirect(url_for('patient_dashboard'))
+            elif mode == 'register':
+                if existing_patient:
+                    flash('Username already exists. Please login.', 'error')
+                else:
+                    # Register new user
+                    new_patient = {
+                        'username': username,
+                        'password_hash': hash_password(password),
+                        'email': '' # Optional
+                    }
+                    if 'patients' not in users_data:
+                        users_data['patients'] = []
+                    users_data['patients'].append(new_patient)
+                    save_users(users_data)
+                    
+                    # Log in
+                    session['username'] = username
+                    session['user_type'] = 'patient'
+                    flash('Account created successfully!', 'success')
+                    return redirect(url_for('patient_dashboard'))
             
-        flash('Username is required', 'error')
+            return render_template('patient_login.html')
+            
+        flash('Username and password are required', 'error')
     
     return render_template('patient_login.html')
 
@@ -122,7 +143,7 @@ def faculty_login():
         users_data = load_users()
         
         for faculty in users_data.get('faculty', []):
-            if faculty['username'] == username and check_password(password, faculty['password_hash']):
+            if faculty['username'] == username and faculty.get('password_hash') and check_password(password, faculty['password_hash']):
                 session['username'] = username
                 session['user_type'] = 'faculty'
                 return redirect(url_for('faculty_dashboard'))
