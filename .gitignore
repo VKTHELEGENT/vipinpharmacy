@@ -2,3 +2,6 @@
 /.vscode/
 *.class
 .DS_Store
+/index.html
+/app.js
+/style.css
