@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediFlow - Login & Registration</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&family=Outfit:wght@600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="header-nav">
+        <div class="container header-container">
+            <a href="/" class="brand-section">
+                <div class="brand-logo">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 10.5h-5.5V5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v5.5H5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5h5.5V19c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-5.5H19c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5z" />
+                    </svg>
+                </div>
+                <span class="brand-name">MediFlow Pharmacy</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <main style="flex:1;">
+        <section id="screen-auth" class="auth-wrapper app-screen-view visible fade-in-anim">
+            <div class="auth-container">
+                <div class="tab-nav">
+                    <a th:href="@{/login(role='patient',mode=${mode})}" class="tab-btn" th:classappend="${role == 'patient' ? 'active' : ''}" style="text-decoration:none; text-align:center; display:block; padding:0.75rem 1rem;">Patient Access</a>
+                    <a th:href="@{/login(role='faculty')}" class="tab-btn" th:classappend="${role == 'faculty' ? 'active' : ''}" style="text-decoration:none; text-align:center; display:block; padding:0.75rem 1rem;">Faculty Staff</a>
+                </div>
+
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <h2 th:text="${role == 'patient' ? (mode == 'register' ? 'Patient Registration' : 'Patient Login') : 'Faculty Secure Portal'}">Patient Login</h2>
+                        <p th:text="${role == 'patient' ? (mode == 'register' ? 'Create a brand new account to access patient portal.' : 'Sign in to check medicine availability and stock details.') : 'Secure access portal for pharmacy managers.'}">Sign in to check medicine availability and stock details.</p>
+                    </div>
+
+                    <!-- Display Error/Success Messages -->
+                    <div th:if="${error}" style="color:var(--danger); background:var(--danger-light); padding:0.75rem; border-radius:var(--radius-sm); margin-bottom:1rem; font-size:0.9rem; font-weight:600; border:1px solid var(--danger);">
+                        <span th:text="${error}">Error Message</span>
+                    </div>
+                    <div th:if="${message}" style="color:var(--success); background:var(--success-light); padding:0.75rem; border-radius:var(--radius-sm); margin-bottom:1rem; font-size:0.9rem; font-weight:600; border:1px solid var(--success);">
+                        <span th:text="${message}">Success Message</span>
+                    </div>
+
+                    <!-- Sign In/Register Form -->
+                    <form th:action="${mode == 'register' ? '/register' : '/login'}" method="POST">
+                        <input type="hidden" name="role" th:value="${role}">
+                        
+                        <!-- Toggle Form Mode (Only for Patient) -->
+                        <div class="form-group" th:if="${role == 'patient'}" style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; background: var(--bg-app); padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                            <label class="inline-checkbox-label" style="cursor: pointer;">
+                                <input type="radio" name="mode-switch" value="login" th:checked="${mode != 'register'}" th:onclick="|window.location.href='/login?role=patient&mode=login'|"> Sign In
+                            </label>
+                            <label class="inline-checkbox-label" style="cursor: pointer;">
+                                <input type="radio" name="mode-switch" value="register" th:checked="${mode == 'register'}" th:onclick="|window.location.href='/login?role=patient&mode=register'|"> Register Account
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="auth-username">Username</label>
+                            <input type="text" id="auth-username" name="username" class="form-input" placeholder="Enter username" required autocomplete="username">
+                        </div>
+
+                        <!-- Email Input (Register Patient only) -->
+                        <div class="form-group" th:if="${role == 'patient' and mode == 'register'}">
+                            <label for="auth-email">Email Address</label>
+                            <input type="email" id="auth-email" name="email" class="form-input" placeholder="Enter email (optional, for resets)">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0.5rem;">
+                            <label for="auth-password">Password</label>
+                            <input type="password" id="auth-password" name="password" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+                        </div>
+
+                        <a th:href="@{/forgot-password(role=${role})}" class="forgot-link" id="link-forgot-pwd">Forgot Password?</a>
+
+                        <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1rem;" th:text="${mode == 'register' ? 'Create Account' : 'Sign In'}">Sign In</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER PANEL -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 MediFlow Pharmacy Manager. Powered by Java & MySQL Relational DB.</p>
+        </div>
+    </footer>
+</body>
+</html>

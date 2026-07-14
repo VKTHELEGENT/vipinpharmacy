@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediFlow - Forgot Password</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&family=Outfit:wght@600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="header-nav">
+        <div class="container header-container">
+            <a href="/" class="brand-section">
+                <div class="brand-logo">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 10.5h-5.5V5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v5.5H5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5h5.5V19c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-5.5H19c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5z" />
+                    </svg>
+                </div>
+                <span class="brand-name">MediFlow Pharmacy</span>
+            </a>
+        </div>
+    </header>
+
+    <main style="flex:1;">
+        <section id="screen-forgot-pwd" class="auth-wrapper app-screen-view visible fade-in-anim">
+            <div class="auth-container">
+                <div class="auth-card">
+                    <!-- Error / Info messages -->
+                    <div th:if="${error}" style="color:var(--danger); background:var(--danger-light); padding:0.75rem; border-radius:var(--radius-sm); margin-bottom:1rem; font-size:0.9rem; font-weight:600; border:1px solid var(--danger);">
+                        <span th:text="${error}">Error Message</span>
+                    </div>
+                    <div th:if="${message}" style="color:var(--success); background:var(--success-light); padding:0.75rem; border-radius:var(--radius-sm); margin-bottom:1rem; font-size:0.9rem; font-weight:600; border:1px solid var(--success);">
+                        <span th:text="${message}">Success Message</span>
+                    </div>
+
+                    <!-- Step 1: Request code -->
+                    <div th:if="${step != 'reset'}">
+                        <div class="auth-header">
+                            <h2>Forgot Password</h2>
+                            <p>Enter the email address registered with your account. We will send a 6-digit verification code to reset it.</p>
+                        </div>
+                        <form action="/forgot-password" method="POST">
+                            <div class="form-group">
+                                <label for="forgot-user-role">User Account Role</label>
+                                <select id="forgot-user-role" name="role" class="form-input" style="cursor: pointer;">
+                                    <option value="PATIENT" th:selected="${role == 'patient'}">Patient Account</option>
+                                    <option value="FACULTY" th:selected="${role == 'faculty'}">Faculty / Staff Account</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="forgot-email">Email Address</label>
+                                <input type="email" id="forgot-email" name="email" class="form-input" placeholder="email@example.com" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">Send Verification Code</button>
+                            <div class="auth-switch-prompt">
+                                <a class="auth-switch-link" href="/login">&larr; Back to login</a>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Step 2: Verification details -->
+                    <div th:if="${step == 'reset'}">
+                        <div class="auth-header">
+                            <h2>Reset Password</h2>
+                            <p id="forgot-code-alert-status" style="color:var(--warning); font-size:0.9rem; font-weight:600; padding:0.5rem; background:var(--warning-light); border-radius:var(--radius-sm); margin-bottom: 1rem;">
+                                Verification code generated!<br>
+                                Email: <b th:text="${email}">email</b><br>
+                                Code (Emulated for local testing): <b style="font-size:1.15rem; color:var(--text-primary); background:rgba(255,255,255,0.7); padding:0.1rem 0.5rem; border-radius:4px;" th:text="${generatedCode}">123456</b>
+                            </p>
+                            <p>Check the notification code above to complete your reset details.</p>
+                        </div>
+                        <form action="/reset-password" method="POST">
+                            <input type="hidden" name="email" th:value="${email}">
+                            <div class="form-group">
+                                <label for="reset-code">6-Digit Verification Code</label>
+                                <input type="text" id="reset-code" name="code" class="form-input" maxlength="6" placeholder="Enter 6-digit code" required style="font-weight:700; letter-spacing:0.1em; text-align:center; font-size:1.1rem;">
+                            </div>
+                            <div class="form-group">
+                                <label for="reset-new-password">New Password</label>
+                                <input type="password" id="reset-new-password" name="newPassword" class="form-input" placeholder="Create high-strength password" required autocomplete="new-password">
+                            </div>
+                            <div class="form-group">
+                                <label for="reset-confirm-password">Confirm New Password</label>
+                                <input type="password" id="reset-confirm-password" name="confirmPassword" class="form-input" placeholder="Confirm password" required autocomplete="new-password">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">Confirm & Reset Password</button>
+                            <div class="auth-switch-prompt">
+                                <a class="auth-switch-link" href="/login">Cancel and return to Login</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER PANEL -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 MediFlow Pharmacy Manager. Powered by Java & MySQL Relational DB.</p>
+        </div>
+    </footer>
+</body>
+</html>

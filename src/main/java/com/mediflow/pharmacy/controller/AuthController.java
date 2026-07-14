@@ -7,19 +7,16 @@ import com.mediflow.pharmacy.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
-@RestController
-@RequestMapping("/api/auth")
+@Controller
 public class AuthController {
 
     @Autowired
@@ -28,175 +25,224 @@ public class AuthController {
     @Autowired
     private ResetCodeRepository resetCodeRepository;
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> request, HttpSession session) {
-        String username = request.get("username");
-        String password = request.get("password");
-        String role = request.get("role"); // "patient" or "faculty"
+    @GetMapping("/")
+    public String index(HttpSession session) {
+        String role = (String) session.getAttribute("role");
+        String username = (String) session.getAttribute("username");
+        if (username != null && role != null) {
+            if ("faculty".equalsIgnoreCase(role)) {
+                return "redirect:/faculty/dashboard";
+            } else {
+                return "redirect:/patient/dashboard";
+            }
+        }
+        return "redirect:/login";
+    }
 
-        if (username == null || password == null || role == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Username, password and role are required."));
+    @GetMapping("/login")
+    public String loginPage(@RequestParam(value = "role", defaultValue = "patient") String role,
+                            @RequestParam(value = "mode", defaultValue = "login") String mode,
+                            HttpSession session,
+                            Model model) {
+        String sessionUser = (String) session.getAttribute("username");
+        String sessionRole = (String) session.getAttribute("role");
+        if (sessionUser != null && sessionRole != null) {
+            if ("faculty".equalsIgnoreCase(sessionRole)) {
+                return "redirect:/faculty/dashboard";
+            } else {
+                return "redirect:/patient/dashboard";
+            }
+        }
+        model.addAttribute("role", role.toLowerCase());
+        model.addAttribute("mode", mode.toLowerCase());
+        return "login";
+    }
+
+    @PostMapping("/login")
+    public String login(@RequestParam("username") String username,
+                        @RequestParam("password") String password,
+                        @RequestParam("role") String role,
+                        HttpSession session,
+                        Model model) {
+        
+        model.addAttribute("role", role.toLowerCase());
+        model.addAttribute("mode", "login");
+
+        if (username == null || username.trim().isEmpty() || password == null || role == null) {
+            model.addAttribute("error", "Username, password and role are required.");
+            return "login";
         }
 
-        Optional<User> userOpt = userRepository.findByUsername(username);
+        Optional<User> userOpt = userRepository.findByUsername(username.trim());
         if (userOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid username or password."));
+            model.addAttribute("error", "Invalid username or password.");
+            return "login";
         }
 
         User user = userOpt.get();
-        // Check role
         if (!user.getRole().equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Access denied for this role."));
+            model.addAttribute("error", "Access denied for this role.");
+            return "login";
         }
 
-        // Check password
         if (!BCrypt.checkpw(password, user.getPasswordHash())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid username or password."));
+            model.addAttribute("error", "Invalid username or password.");
+            return "login";
         }
 
-        // Set session
         session.setAttribute("username", user.getUsername());
         session.setAttribute("role", user.getRole().toLowerCase());
 
-        Map<String, String> response = new HashMap<>();
-        response.put("username", user.getUsername());
-        response.put("type", user.getRole().toLowerCase());
-        return ResponseEntity.ok(response);
+        if (user.getRole().equalsIgnoreCase("FACULTY")) {
+            return "redirect:/faculty/dashboard";
+        } else {
+            return "redirect:/patient/dashboard";
+        }
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Map<String, String> request, HttpSession session) {
-        String username = request.get("username");
-        String password = request.get("password");
-        String email = request.get("email");
-        String role = request.get("role"); // Default to PATIENT if not provided or register flow
+    public String register(@RequestParam("username") String username,
+                           @RequestParam("password") String password,
+                           @RequestParam(value = "email", required = false) String email,
+                           @RequestParam("role") String role,
+                           HttpSession session,
+                           Model model) {
 
-        if (username == null || password == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Username and password are required."));
+        model.addAttribute("role", role.toLowerCase());
+        model.addAttribute("mode", "register");
+
+        if (username == null || username.trim().isEmpty() || password == null) {
+            model.addAttribute("error", "Username and password are required.");
+            return "login";
         }
 
-        if (role == null) role = "PATIENT";
-        role = role.toUpperCase();
+        String checkRole = (role == null) ? "PATIENT" : role.toUpperCase();
 
-        Optional<User> checkUser = userRepository.findByUsername(username);
+        Optional<User> checkUser = userRepository.findByUsername(username.trim());
         if (checkUser.isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Username already exists."));
+            model.addAttribute("error", "Username already exists.");
+            return "login";
         }
 
         String hashed = BCrypt.hashpw(password, BCrypt.gensalt(12));
-        User newUser = new User(username, hashed, email, role);
+        User newUser = new User(username.trim(), hashed, email != null ? email.trim() : null, checkRole);
         userRepository.save(newUser);
 
-        // Auto login after register
         session.setAttribute("username", newUser.getUsername());
         session.setAttribute("role", newUser.getRole().toLowerCase());
 
-        Map<String, String> response = new HashMap<>();
-        response.put("username", newUser.getUsername());
-        response.put("type", newUser.getRole().toLowerCase());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        if (newUser.getRole().equalsIgnoreCase("FACULTY")) {
+            return "redirect:/faculty/dashboard";
+        } else {
+            return "redirect:/patient/dashboard";
+        }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpSession session) {
+    public String logout(HttpSession session) {
         session.invalidate();
-        return ResponseEntity.ok(Map.of("message", "Logged out successfully."));
+        return "redirect:/login";
     }
 
-    @GetMapping("/session")
-    public ResponseEntity<?> getSession(HttpSession session) {
-        String username = (String) session.getAttribute("username");
-        String role = (String) session.getAttribute("role");
-
-        if (username == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No active session."));
-        }
-
-        Map<String, String> response = new HashMap<>();
-        response.put("username", username);
-        response.put("type", role);
-        return ResponseEntity.ok(response);
+    @GetMapping("/forgot-password")
+    public String forgotPasswordPage(@RequestParam(value = "role", defaultValue = "patient") String role, Model model) {
+        model.addAttribute("role", role.toLowerCase());
+        return "forgot";
     }
 
     @PostMapping("/forgot-password")
-    @Transactional
-    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        String userType = request.get("userType"); // "patient" or "faculty"
+    public String forgotPassword(@RequestParam("email") String email,
+                                 @RequestParam("role") String role,
+                                 Model model) {
+        
+        model.addAttribute("role", role.toLowerCase());
 
-        if (email == null || userType == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Email and user role type are required."));
+        if (email == null || email.trim().isEmpty() || role == null) {
+            model.addAttribute("error", "Email and user role type are required.");
+            return "forgot";
         }
 
-        Optional<User> userOpt = userRepository.findByEmailAndRole(email, userType.toUpperCase());
+        Optional<User> userOpt = userRepository.findByEmailAndRole(email.trim(), role.toUpperCase());
         if (userOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "No account found matching this email."));
+            model.addAttribute("error", "No account found matching this email and role.");
+            return "forgot";
         }
 
         User user = userOpt.get();
 
-        // Generate 6-digit random code
         Random random = new Random();
         String code = String.valueOf(100000 + random.nextInt(900000));
         LocalDateTime expiry = LocalDateTime.now().plusMinutes(10);
 
-        // Delete existing codes
-        resetCodeRepository.deleteByEmail(email);
+        resetCodeRepository.deleteByEmail(email.trim());
 
-        // Save new code
-        ResetCode resetCode = new ResetCode(email, code, expiry, userType, user.getUsername());
+        ResetCode resetCode = new ResetCode(email.trim(), code, expiry, role.toLowerCase(), user.getUsername());
         resetCodeRepository.save(resetCode);
 
-        // Emulate sending verification email by passing code back in response
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Verification code generated.");
-        response.put("code", code); // Passed for local testing emulation
-        return ResponseEntity.ok(response);
+        model.addAttribute("step", "reset");
+        model.addAttribute("email", email.trim());
+        model.addAttribute("generatedCode", code);
+        model.addAttribute("message", "Verification code generated.");
+        return "forgot";
     }
 
     @PostMapping("/reset-password")
-    @Transactional
-    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        String code = request.get("code");
-        String newPassword = request.get("newPassword");
-        String confirmPassword = request.get("confirmPassword");
+    public String resetPassword(@RequestParam("email") String email,
+                                @RequestParam("code") String code,
+                                @RequestParam("newPassword") String newPassword,
+                                @RequestParam("confirmPassword") String confirmPassword,
+                                Model model,
+                                RedirectAttributes redirectAttributes) {
 
         if (email == null || code == null || newPassword == null || confirmPassword == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "All fields are required."));
+            model.addAttribute("error", "All fields are required.");
+            model.addAttribute("step", "reset");
+            model.addAttribute("email", email);
+            return "forgot";
         }
 
         if (!newPassword.equals(confirmPassword)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Passwords do not match."));
+            model.addAttribute("error", "Passwords do not match.");
+            model.addAttribute("step", "reset");
+            model.addAttribute("email", email);
+            return "forgot";
         }
 
-        Optional<ResetCode> codeOpt = resetCodeRepository.findFirstByEmailOrderByExpiresDesc(email);
+        Optional<ResetCode> codeOpt = resetCodeRepository.findFirstByEmailOrderByExpiresDesc(email.trim());
         if (codeOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Password reset request session not found or invalid email."));
+            model.addAttribute("error", "Password reset request session not found or invalid email.");
+            model.addAttribute("step", "reset");
+            model.addAttribute("email", email);
+            return "forgot";
         }
 
         ResetCode resetCode = codeOpt.get();
         if (LocalDateTime.now().isAfter(resetCode.getExpires())) {
             resetCodeRepository.delete(resetCode);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Verification code has expired. Request a new one."));
+            model.addAttribute("error", "Verification code has expired. Request a new one.");
+            return "forgot";
         }
 
-        if (!resetCode.getCode().equals(code)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid verification code."));
+        if (!resetCode.getCode().equals(code.trim())) {
+            model.addAttribute("error", "Invalid verification code.");
+            model.addAttribute("step", "reset");
+            model.addAttribute("email", email);
+            model.addAttribute("generatedCode", resetCode.getCode());
+            return "forgot";
         }
 
-        // Find user and reset password
         Optional<User> userOpt = userRepository.findByUsername(resetCode.getUsername());
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             user.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt(12)));
             userRepository.save(user);
 
-            // Clean up code
             resetCodeRepository.delete(resetCode);
-            return ResponseEntity.ok(Map.of("message", "Password reset successfully. Please login with your new password."));
+            redirectAttributes.addFlashAttribute("message", "Password reset successfully. Please login with your new password.");
+            return "redirect:/login";
         }
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Internal user retrieval error."));
+        model.addAttribute("error", "Internal user retrieval error.");
+        return "forgot";
     }
 }

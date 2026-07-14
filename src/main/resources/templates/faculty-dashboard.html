@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediFlow - Faculty Control Center</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&family=Outfit:wght@600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="header-nav">
+        <div class="container header-container">
+            <a href="/faculty/dashboard" class="brand-section">
+                <div class="brand-logo">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 10.5h-5.5V5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v5.5H5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5h5.5V19c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-5.5H19c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5z" />
+                    </svg>
+                </div>
+                <span class="brand-name">MediFlow Pharmacy</span>
+            </a>
+
+            <div class="nav-actions">
+                <div class="user-menu" id="header-user-menu">
+                    <div class="user-avatar" th:text="${#strings.substring(username, 0, 1).toUpperCase()}">U</div>
+                    <span class="user-name" th:text="${username + ' (staff)'}">Username</span>
+                    <form action="/logout" method="POST" style="margin: 0; display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-small" style="border: none; padding: 0.25rem 0.5rem; cursor: pointer;">Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <main style="flex:1; padding-top: 2rem;">
+        <section id="screen-faculty-dashboard" class="dashboard-wrapper app-screen-view visible fade-in-anim">
+            <div class="container">
+                <div class="section-header" style="margin-bottom: 2rem;">
+                    <div>
+                        <h2 style="font-size: 2rem; color: var(--text-primary);">Faculty Portal Control Center</h2>
+                        <p style="color: var(--text-secondary);" th:text="${'Staff Member: ' + username + '. Session Active. (Cloud Server Connected)'}">Welcome, staff!</p>
+                    </div>
+                </div>
+
+                <!-- Display Error/Success Messages -->
+                <div th:if="${error}" style="color:var(--danger); background:var(--danger-light); padding:0.75rem; border-radius:var(--radius-sm); margin-bottom:1rem; font-size:0.9rem; font-weight:600; border:1px solid var(--danger);">
+                    <span th:text="${error}">Error Message</span>
+                </div>
+                <div th:if="${message}" style="color:var(--success); background:var(--success-light); padding:0.75rem; border-radius:var(--radius-sm); margin-bottom:1rem; font-size:0.9rem; font-weight:600; border:1px solid var(--success);">
+                    <span th:text="${message}">Success Message</span>
+                </div>
+
+                <!-- Stock Warnings banner (quantity < 18) -->
+                <div th:if="${not #lists.isEmpty(lowStockMedicines)}" class="stock-warning-banner">
+                    <h4>⚠️ Restock Required (Less than 18 strips remaining)</h4>
+                    <ul>
+                        <li th:each="m : ${lowStockMedicines}" th:text="${'🚨 ' + m.name + ' - Only ' + m.quantity + ' strips in archive. Restock requested immediately.'}">Paracetamol - Only 12 left</li>
+                    </ul>
+                </div>
+
+                <!-- Register medicine section -->
+                <details class="expandable-form-card" style="margin-bottom: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-card); overflow: hidden; display: block;">
+                    <summary class="form-toggle-header" style="padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: none; transition: background-color var(--transition-fast);">
+                        <span style="font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-primary);">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                                <path d="M12 5v14M5 12h14" />
+                            </svg>
+                            Register New Medicine to Stock
+                        </span>
+                        <div class="toggle-icon" style="transition: transform var(--transition-normal);">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </summary>
+                    <div class="collapsible-body">
+                        <form action="/faculty/medicines/add" method="POST">
+                            <div class="form-row" style="margin-bottom:1rem; display: flex; gap: 1.5rem;">
+                                <div class="form-group" style="margin-bottom:0; flex: 1;">
+                                    <label for="add-med-name">Medicine Product Name</label>
+                                    <input type="text" id="add-med-name" name="name" class="form-input" placeholder="e.g. Vitamin C" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0; flex: 1;">
+                                    <label for="add-med-qty">Initial Quantity (Strips)</label>
+                                    <input type="number" id="add-med-qty" name="quantity" class="form-input" min="0" value="0" placeholder="e.g. 50" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="add-med-details">Dosage, Composition, and Administration Details</label>
+                                <textarea id="add-med-details" name="details" class="form-input" rows="3" placeholder="Provide description, recommended usage, instructions..." required></textarea>
+                            </div>
+                            <div class="form-group" style="margin-top: 1rem;">
+                                <label class="inline-checkbox-label" style="cursor: pointer;">
+                                    <input type="checkbox" name="available" value="true" checked>
+                                    Mark immediately available in pharmacy search
+                                </label>
+                            </div>
+                            <div style="display:flex; justify-content:flex-end; gap: 1rem; margin-top: 1.5rem;">
+                                <button type="button" class="btn btn-secondary" onclick="this.closest('details').removeAttribute('open')">Cancel</button>
+                                <button type="submit" class="btn btn-success">Add Medicine Item</button>
+                            </div>
+                        </form>
+                    </div>
+                </details>
+
+                <!-- Filter search parameters -->
+                <div class="search-card">
+                    <form action="/faculty/dashboard" method="GET">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="faculty-search-input" style="font-size: 1rem; margin-bottom: 0.75rem;">Interactive Stock Search</label>
+                            <div class="input-container" style="display: flex; gap: 0.5rem;">
+                                <div style="position: relative; flex: 1; display: flex; align-items: center;">
+                                    <div class="search-icon-wrapper" style="position: absolute; left: 12px; display: flex; align-items: center; pointer-events: none;">
+                                        <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px; color: var(--text-muted);">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+                                        </svg>
+                                    </div>
+                                    <input type="text" id="faculty-search-input" name="q" class="form-input search-input-field" th:value="${query}" placeholder="Search medicines catalog filter name instantly..." style="padding-left: 2.75rem;">
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.5rem; height: 42px;">Search</button>
+                                <a th:if="${query != null and query != ''}" href="/faculty/dashboard" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; display: flex; align-items: center; text-decoration: none; height: 42px;">Clear</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="section-header">
+                    <h3>Pharmacy Inventory Database</h3>
+                    <span id="faculty-inv-counter" class="badge badge-secondary" th:text="${'Total Loaded: ' + #lists.size(medicines)}" style="font-size:0.875rem; color:var(--text-secondary); font-weight:600; background:var(--border); padding:0.25rem 0.75rem; border-radius:99px;">Total Loaded: 8</span>
+                </div>
+
+                <div class="medicines-display-grid">
+                    <div th:if="${#lists.isEmpty(medicines)}" style="grid-column: 1/-1; text-align:center; padding:3rem; color:var(--text-secondary);">
+                        Search matches no items.
+                    </div>
+
+                    <!-- Medicine Card loops -->
+                    <div th:each="m : ${medicines}" class="med-card fade-in-anim" th:classappend="(${m.quantity == 0} ? 'out-of-stock-border' : (${m.quantity < 18} ? 'low-stock-warning-border' : ''))" style="cursor: default;">
+                        <div class="med-card-info" style="margin-bottom: 0.5rem;">
+                            <h4 style="display:flex; justify-content:space-between; align-items:center;">
+                                <a th:href="${'#med-details-' + m.id}" th:text="${m.name}" style="text-decoration: none; color: inherit; font-weight: inherit;" title="Click to view full details">Medicine Name</a>
+                                <a th:href="${'#med-details-' + m.id}" style="color: var(--text-muted);"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+                            </h4>
+                            <p th:text="${m.details}" style="font-size:0.825rem; color:var(--text-muted); white-space: nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom: 0.5rem;">No catalog details provided.</p>
+                        </div>
+                        
+                        <!-- Toggle Availability Form -->
+                        <div class="med-card-row" style="margin-top: 0.25rem;">
+                            <span class="med-card-label">Active Visibility:</span>
+                            <form th:action="@{/faculty/medicines/toggle/{id}(id=${m.id})}" method="POST" style="margin: 0;">
+                                <button type="submit" class="custom-toggle-switch" th:classappend="${m.available ? 'active' : ''}" style="background: none; border: none; padding: 0; outline: none; cursor: pointer; display: inline-flex; align-items: center;">
+                                    <div class="toggle-slider-outer">
+                                        <div class="toggle-slider-inner"></div>
+                                    </div>
+                                    <span class="toggle-label-span" th:text="${m.available ? 'Available' : 'Unavailable'}">Available</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Quantity Modification Form -->
+                        <div class="qty-action-block">
+                            <form th:action="@{/faculty/medicines/quantity/{id}(id=${m.id})}" method="POST" style="margin: 0;">
+                                <div class="qty-control-wrapper">
+                                    <span class="med-card-label" style="flex:1;">Inventory Count:</span>
+                                    <button type="submit" name="action" value="decrease" class="qty-btn" th:disabled="${m.quantity == 0}">–</button>
+                                    <input type="number" class="qty-input-box" name="quantity" th:value="${m.quantity}" min="0">
+                                    <button type="submit" name="action" value="increase" class="qty-btn">+</button>
+                                </div>
+                            </form>
+
+                            <div class="card-action-keys">
+                                <a class="btn btn-secondary btn-small" style="flex:1; text-align:center; text-decoration:none;" th:href="@{/faculty/medicines/edit/{id}(id=${m.id})}">Edit Details</a>
+                                <a class="btn btn-danger btn-small" th:href="${'#delete-confirm-' + m.id}" style="text-decoration:none; text-align:center;">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Medicine Detail Modals (Rendered dynamically for each medicine via target ID) -->
+    <div th:each="m : ${medicines}" class="modal-overlay" th:id="${'med-details-' + m.id}">
+        <div class="modal-content-card">
+            <a href="#" class="modal-close-trigger" aria-label="Close modal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </a>
+            <div class="modal-body-wrapper">
+                <span class="badge" th:classappend="${m.available ? 'badge-success' : 'badge-danger'}" th:text="${m.available ? 'AVAILABLE' : 'OUT OF STOCK'}">AVAILABLE</span>
+                <h3 th:text="${m.name}">Medicine Name</h3>
+
+                <div class="modal-details-block" style="margin-top: 1rem;">
+                    <p style="margin-bottom: 0.5rem;"><strong>Current Inventory Level:</strong> <span th:text="${m.quantity}">0</span> strips</p>
+                    <p th:if="${m.quantity < 18}" class="badge badge-warning" style="display:inline-flex; font-size:0.875rem;">
+                        <span th:text="${'⚠️ LOW STOCK LEVEL: ' + m.quantity + ' STRIPS'}">⚠️ warning: stock is running low!</span>
+                    </p>
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <h4 style="font-size: 1.05rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Prescription Description & Dosage Directions:</h4>
+                    <p th:text="${m.details != null and m.details != '' ? m.details : 'No composition details available.'}" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary);">No notes provided for this product.</p>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top: 2rem;">
+                <a href="#" class="btn btn-primary" style="text-decoration: none; line-height: normal; display: flex; align-items: center; justify-content: center;">Close Details View</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medicine Delete Confirmation Modals (Rendered dynamically for each medicine via target ID) -->
+    <div th:each="m : ${medicines}" class="modal-overlay" th:id="${'delete-confirm-' + m.id}">
+        <div class="modal-content-card" style="max-width: 400px; text-align: center;">
+            <div style="color:var(--danger); margin-bottom:1rem;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto; display:block;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <h3 style="font-size:1.3rem;">Delete Stock Item?</h3>
+            <p style="color:var(--text-secondary); font-size:0.95rem; margin-top:0.5rem; margin-bottom:1.5rem;">
+                Are you sure you want to permanently delete <b style="color:var(--text-primary)" th:text="${'&quot;' + m.name + '&quot;'}">"medicine"</b> from inventory database records?<br>This action cannot be undone.
+            </p>
+            <div style="display:flex; justify-content:center; gap: 1rem;">
+                <a href="#" class="btn btn-secondary" style="text-decoration: none; display: flex; align-items: center;">Cancel</a>
+                <form th:action="@{/faculty/medicines/delete/{id}(id=${m.id})}" method="POST" style="margin:0;">
+                    <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER PANEL -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 MediFlow Pharmacy Manager. Powered by Java & MySQL Relational DB.</p>
+        </div>
+    </footer>
+</body>
+</html>

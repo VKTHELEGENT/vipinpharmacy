@@ -835,7 +835,8 @@ h1, h2, h3, h4, h5, h6 {
     transition: opacity var(--transition-normal);
 }
 
-.modal-overlay.open {
+.modal-overlay.open,
+.modal-overlay:target {
     opacity: 1;
     pointer-events: auto;
 }
@@ -853,7 +854,8 @@ h1, h2, h3, h4, h5, h6 {
     transition: transform var(--transition-normal);
 }
 
-.modal-overlay.open .modal-content-card {
+.modal-overlay.open .modal-content-card,
+.modal-overlay:target .modal-content-card {
     transform: scale(1);
 }
 
@@ -1068,3 +1070,25 @@ footer {
         justify-content: space-between;
     }
 }
+
+/* Native Collapsible details / summary styling rules */
+details.expandable-form-card summary {
+    list-style: none; /* remove default arrow */
+    outline: none;
+    cursor: pointer;
+}
+details.expandable-form-card summary::-webkit-details-marker {
+    display: none; /* remove default arrow on safari */
+}
+details[open].expandable-form-card summary {
+    border-bottom: 1px solid var(--border);
+}
+details[open].expandable-form-card summary .toggle-icon {
+    transform: rotate(180deg);
+}
+details.expandable-form-card .collapsible-body {
+    max-height: none;
+    overflow: visible;
+    padding: 1.5rem;
+}
+
