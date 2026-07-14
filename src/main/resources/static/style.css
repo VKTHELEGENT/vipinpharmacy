@@ -83,6 +83,12 @@ body {
     transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
+main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
     font-weight: 700;
@@ -1129,6 +1135,10 @@ footer {
 
 .app-screen-view.visible {
     display: block;
+}
+
+.auth-wrapper.visible {
+    display: flex;
 }
 
 /* Animations */
